@@ -1,13 +1,6 @@
 """ToDo!"""
 
-__version__ = "0.1.2"
-
-from .encoder import Encoder
-from .classifier import Classifier
-from .dataset import Dataset
-from .trainer import Trainer
-from .metric import Metric
-from .pooler import Pooler
+__version__ = "0.1.4"
 
 import logging
 from typing import List
@@ -15,6 +8,12 @@ from typing import List
 import pandas as pd
 import torch
 
+from .classifier import Classifier
+from .dataset import Dataset
+from .encoder import Encoder
+from .metric import Metric
+from .pooler import Pooler
+from .trainer import Trainer
 from .util import setup_args_parser, setup_logging, load_config, get_device
 
 
