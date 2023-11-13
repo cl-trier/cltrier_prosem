@@ -66,18 +66,18 @@ class Trainer:
         time_begin: datetime = datetime.now()
 
         loss_train, f1_train, metric_train = self._step(self.dataset['train'], optimize=True)
-        loss_eval, f1_eval, metric_eval = self._step(self.dataset['val'])
+        loss_test, f1_test, metric_test = self._step(self.dataset['test'])
 
         self.progress['epoch'].append(len(self.progress['epoch']) + 1)
         self.progress['duration'].append(datetime.now() - time_begin)
 
         self.progress['loss_train'].append(loss_train)
-        self.progress['loss_eval'].append(loss_eval)
+        self.progress['loss_test'].append(loss_test)
 
         self.progress['f1_train'].append(f1_train)
-        self.progress['f1_eval'].append(f1_eval)
+        self.progress['f1_test'].append(f1_test)
 
-        return metric_train, metric_eval
+        return metric_train, metric_test
 
     def _step(self, dataset: Dataset, optimize: bool = False) -> Tuple[float, float, Dict[str, pd.Series]]:
         loss_value: float = 0.0
@@ -121,7 +121,7 @@ class Trainer:
         self.optimizer.zero_grad()
 
     def _evaluate(self, metric: Dict[str, pd.Series]) -> None:
-        logging.info(f'[--- EVALUATION on max(f1_eval) ---]')
+        logging.info(f'[--- EVALUATION on max(f1_test) ---]')
         metric = Metric(decoding_fn=self.dataset['train'].decode_target_label, **metric)
         metric.export(self.config["export_path"])
         logging.info(metric)
@@ -136,8 +136,8 @@ class Trainer:
         logging.info((
             f'[@{self.progress["epoch"][-1]:03}]: \t'
             f'loss_train={self.progress["loss_train"][-1]:2.4f} \t'
-            f'loss_eval={self.progress["loss_eval"][-1]:2.4f} \t'
+            f'loss_test={self.progress["loss_test"][-1]:2.4f} \t'
             f'f1_train={self.progress["f1_train"][-1]:2.4f} \t'
-            f'f1_eval={self.progress["f1_eval"][-1]:2.4f} \t'
+            f'f1_test={self.progress["f1_test"][-1]:2.4f} \t'
             f'duration={self.progress["duration"][-1]}'
         ))
