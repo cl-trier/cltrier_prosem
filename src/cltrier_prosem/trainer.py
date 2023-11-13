@@ -31,9 +31,9 @@ class Trainer:
         self.progress: dict = {
             'epoch': [],
             'loss_train': [],
-            'loss_eval': [],
+            'loss_test': [],
             'f1_train': [],
-            'f1_eval': [],
+            'f1_test': [],
             'duration': []
         }
 
@@ -45,22 +45,22 @@ class Trainer:
         )
 
     def __call__(self) -> None:
-        best_eval_metric: Dict[str, pd.Series] = {}
+        best_test_metric: Dict[str, pd.Series] = {}
 
         try:
             for epoch in range(self.config['num_epochs']):
-                _, metric_eval = self._epoch()
+                _, metric_test = self._epoch()
                 self._log()
 
-                if self.progress['f1_eval'][-1] == max(self.progress['f1_eval']):
-                    best_eval_metric = metric_eval
+                if self.progress['f1_test'][-1] == max(self.progress['f1_test']):
+                    best_test_metric = metric_test
                     self.model.save_pretrained(self.config["export_path"])
 
         except KeyboardInterrupt:
             logging.warning('Warning: Training interrupted by user, skipping to evaluation if possible.')
 
-        if best_eval_metric:
-            self._evaluate(best_eval_metric)
+        if best_test_metric:
+            self._evaluate(best_test_metric)
 
     def _epoch(self) -> Tuple[Dict[str, pd.Series], Dict[str, pd.Series]]:
         time_begin: datetime = datetime.now()
