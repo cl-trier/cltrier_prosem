@@ -1,5 +1,5 @@
 from typing import Union, Dict
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 
 import pandas as pd
 from sklearn.metrics import f1_score, accuracy_score, classification_report
@@ -8,8 +8,8 @@ from sklearn.metrics import f1_score, accuracy_score, classification_report
 @dataclass
 class Metric:
     decoding_fn: callable = lambda x: x
-    golds: pd.Series = pd.Series([], dtype=object)
-    preds: pd.Series = pd.Series([], dtype=object)
+    golds: pd.Series = field(default_factory=pd.Series)
+    preds: pd.Series = field(default_factory=pd.Series)
 
     def add_observations(self, golds: pd.Series, preds: pd.Series):
         self.golds = pd.concat([self.golds, golds], ignore_index=True)

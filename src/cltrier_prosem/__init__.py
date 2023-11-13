@@ -1,23 +1,27 @@
+"""ToDo!"""
+
+__version__ = "0.1.2"
+
+from .encoder import Encoder
+from .classifier import Classifier
+from .dataset import Dataset
+from .trainer import Trainer
+from .metric import Metric
+from .pooler import Pooler
+
 import logging
 from typing import List
 
 import pandas as pd
 import torch
 
-from .classifier import Classifier
-from .encoder import Encoder
-from .dataset import Dataset
-from .trainer import Trainer
 from .util import setup_args_parser, setup_logging, load_config, get_device
 
 
-class CLI:
+class Pipeline:
 
-    def __init__(self):
-        parser, args = setup_args_parser('ProSem - Span Classification')
-
-        setup_logging(args.debug)
-        self.config: dict = load_config(args.config)
+    def __init__(self, config: dict):
+        self.config: dict = config
 
         logging.info('[--- LOAD ENCODER ---]')
         self.encoder = Encoder(**self.config['encoder'])
@@ -38,7 +42,7 @@ class CLI:
                     target_label=self.config["dataset"]["label_column"],
                     target_mapping=self.target_mapping
                 )
-                for split in ['train', 'val']
+                for split in ['train', 'test']
             },
             model=self.load_classifier(),
             collation_fn=self.collate,
@@ -50,12 +54,16 @@ class CLI:
         self.trainer()
 
     def load_classifier(self) -> Classifier:
-        pass
+        return Classifier(
+            in_size=self.encoder.dim,
+            out_size=len(self.config['dataset']['label_classes']),
+            **self.config['classifier']
+        )
 
     def collate(self, batch: List[pd.DataFrame]) -> dict:
         collated_data: pd.DataFrame = pd.concat(batch)
 
-        return {
+        pre_collated: dict = {
             'labels': torch.tensor(
                 [
                     self.target_mapping[label] for label
@@ -65,4 +73,17 @@ class CLI:
                 device=get_device()
             ),
             **self.encoder(collated_data[self.config["dataset"]["text_column"]].tolist())
+        }
+
+        if 'subword' in self.config['pooler']['form']:
+            pre_collated['text'] = collated_data[self.config["dataset"]["text_column"]].tolist()
+            pre_collated['span_idx'] = collated_data[self.config["pooler"]["span_column"]].tolist()
+
+        return {
+            'embeds': Pooler.batch_pool(
+                pre_collated,
+                form=self.config['pooler']['form'],
+                encoder=self.encoder
+            ),
+            'labels': pre_collated['labels']
         }

@@ -3,7 +3,6 @@ import logging
 import torch
 import torch.nn as nn
 
-from .tscloss import TSCLoss
 from .util import get_device, model_memory_usage
 
 
@@ -14,8 +13,7 @@ class Classifier(nn.Module):
             in_size: int,
             out_size: int,
             hid_size: int = 32,
-            dropout: float = 0.2,
-            loss_fn: str = 'CrossEntropyLoss'
+            dropout: float = 0.2
     ):
         super().__init__()
 
@@ -26,12 +24,7 @@ class Classifier(nn.Module):
             nn.Linear(hid_size, out_size)
         ).to(get_device())
 
-        if loss_fn == 'TSCLoss':
-            self.loss = TSCLoss()
-
-        else:
-            self.loss = torch.nn.CrossEntropyLoss()
-
+        self.loss = torch.nn.CrossEntropyLoss()
         logging.info(self)
 
     def __call__(self, embeds: torch.Tensor, labels: torch.Tensor):
