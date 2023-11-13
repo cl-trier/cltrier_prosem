@@ -1,0 +1,3 @@
+
+deploy:
+	flit publish
