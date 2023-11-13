@@ -12,8 +12,8 @@ class Metric:
     preds: pd.Series = field(default_factory=pd.Series)
 
     def add_observations(self, golds: pd.Series, preds: pd.Series):
-        self.golds = pd.concat([self.golds, golds], ignore_index=True)
-        self.preds = pd.concat([self.preds, preds], ignore_index=True)
+        self.golds = golds if self.golds.empty else pd.concat([self.golds, golds], ignore_index=True)
+        self.preds = preds if self.preds.empty else pd.concat([self.preds, preds], ignore_index=True)
 
     def f_score(self, reduce: str = "weighted") -> float:
         return f1_score(self.golds, self.preds, average=reduce, zero_division=0.0)
