@@ -20,6 +20,7 @@ from .util import setup_args_parser, setup_logging, load_config, get_device
 class Pipeline:
 
     def __init__(self, config: dict):
+        setup_logging()
         self.config: dict = config
 
         logging.info('[--- LOAD ENCODER ---]')
