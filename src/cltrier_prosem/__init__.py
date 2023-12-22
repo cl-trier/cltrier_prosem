@@ -1,6 +1,6 @@
 """ToDo!"""
 
-__version__ = "0.1.6"
+__version__ = "0.2.0"
 
 import logging
 from typing import List
@@ -72,18 +72,11 @@ class Pipeline:
                 dtype=torch.long,
                 device=get_device()
             ),
+            'span_idx': collated_data[self.config["pooler"]["span_column"]].tolist(),
             **self.encoder(collated_data[self.config["dataset"]["text_column"]].tolist())
         }
 
-        if 'subword' in self.config['pooler']['form']:
-            pre_collated['text'] = collated_data[self.config["dataset"]["text_column"]].tolist()
-            pre_collated['span_idx'] = collated_data[self.config["pooler"]["span_column"]].tolist()
-
         return {
-            'embeds': Pooler.batch_pool(
-                pre_collated,
-                form=self.config['pooler']['form'],
-                encoder=self.encoder
-            ),
+            'embeds': Pooler.batch_pool(pre_collated, form=self.config['pooler']['form']),
             'labels': pre_collated['labels']
         }

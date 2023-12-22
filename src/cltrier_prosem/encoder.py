@@ -54,8 +54,9 @@ class Encoder:
         encoding = self.tokenizer(
             batch,
             padding=padding,
+            max_length=self.max_length,
             truncation=True,
-            max_length=self.max_length
+            return_offsets_mapping=True
         )
 
         return (

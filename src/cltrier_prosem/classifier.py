@@ -35,7 +35,7 @@ class Classifier(nn.Module):
         return self.model(embeds)
 
     def save_pretrained(self, path: str) -> None:
-        torch.save({"state_dict": self.state_dict()}, f'{path}/model')
+        torch.save({"state_dict": self.state_dict()}, f'{path}/model.bin')
 
     def __len__(self) -> int:
         return sum(p.numel() for p in self.parameters() if p.requires_grad)
