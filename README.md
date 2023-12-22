@@ -24,6 +24,8 @@ pipeline = Pipeline({
         'form': 'cls',
         # type of pooling, possible values: 
         # 'cls', 'sent_mean', 'subword_{first|last|mean|min|max}'
+        # if subword probing used
+        'span_column': 'span'
     },
     'trainer': {
         'num_epochs': 5,  # number of training epochs
