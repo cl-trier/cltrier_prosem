@@ -44,12 +44,15 @@ class Pooler:
                 encoded_batch['offset_mapping'],
                 encoded_batch['embeds']
         ):
-            emb_span_idx = Pooler._get_token_idx(mapping, span)
+            emb_span_idx = Pooler._get_token_idx(mapping[1:embeds.size(dim=0) - 1], span)
             yield embeds[emb_span_idx[0]: emb_span_idx[1] + 1]
 
     @staticmethod
-    def _get_token_idx(offset_mapping: List[Tuple[int, int]], char_span: Tuple[int, int]):
+    def _get_token_idx(mapping: List[Tuple[int, int]], c_span: Tuple[int, int]):
+
+        prep_map: callable = lambda pos: list(enumerate(list(zip(*mapping))[pos]))
+
         return (
-            list(zip(*offset_mapping))[0].index(char_span[0]),
-            next(emb_idx for emb_idx, char_idx in enumerate(list(zip(*offset_mapping))[1]) if char_idx >= char_span[1])
+            next(eid for eid, cid in reversed(prep_map(0)) if cid <= c_span[0]),
+            next(eid for eid, cid in prep_map(1) if cid >= c_span[1])
         )
