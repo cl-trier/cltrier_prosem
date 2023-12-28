@@ -32,6 +32,9 @@ dependencies = [
 ]
 dynamic = ["version", "description"]
 
+[project.urls]
+homepage = "https://github.com/smnmnkr/cltrier_prosem"
+
 [tool.pytest.ini_options]
 log_cli = true
 log_cli_level = "INFO"
