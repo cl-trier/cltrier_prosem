@@ -1,40 +1,9 @@
-import argparse
 import logging
 from functools import wraps
 from time import time
-from typing import Union, Callable, Dict
+from typing import Union, Callable
 
-import tomli
 import torch
-
-
-def setup_args_parser(description: str):
-    parser = argparse.ArgumentParser(description=description)
-    parser.add_argument(
-        'config',
-        metavar='C',
-        type=str,
-        help='path to config.toml file'
-    )
-    parser.add_argument(
-        '--debug',
-        default=False,
-        action=argparse.BooleanOptionalAction,
-        help='enable debug level logging'
-    )
-    return parser, parser.parse_args()
-
-
-def setup_logging(debug: bool = False) -> None:
-    logging.basicConfig(
-        level=logging.DEBUG if debug else logging.INFO,
-        format="%(message)s",
-        handlers=[logging.StreamHandler()]
-    )
-
-
-def load_config(path: str) -> Dict[str, any]:
-    return tomli.load(open(path, 'rb'))
 
 
 def get_device() -> str:

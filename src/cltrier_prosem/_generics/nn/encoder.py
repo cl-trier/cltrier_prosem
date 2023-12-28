@@ -1,34 +1,33 @@
 import logging as logger
 import os
-from typing import List, Optional, Tuple
+from typing import List, Tuple
 
 import torch
+from pydantic import BaseModel
 from transformers import AutoTokenizer, AutoModel, logging
 
-from .util import get_device, unpad, timing, model_memory_usage
+from ..util import get_device, unpad, timing, model_memory_usage
 
 os.environ["TOKENIZERS_PARALLELISM"] = "false"
+
+
+class EncoderConfig(BaseModel):
+    model: str = "deepset/gbert-base"
+    max_length: int = 512
+    layers: List[int] = [-1]
 
 
 class Encoder:
 
     @timing
-    def __init__(
-            self,
-            model: str = "deepset/gbert-base",
-            max_length: int = 512,
-            layers: Optional[List[int]] = None,
-    ):
+    def __init__(self, config: EncoderConfig):
         logging.set_verbosity_error()
+        self.config = config
 
-        if layers is None:
-            layers = [-1]
-
-        self.tokenizer = AutoTokenizer.from_pretrained(model)
-        self.model = AutoModel.from_pretrained(model, output_hidden_states=True).to(get_device())
-
-        self.max_length = max_length
-        self.layers = layers
+        self.tokenizer = AutoTokenizer.from_pretrained(config.model)
+        self.model = AutoModel.from_pretrained(
+            config.model, output_hidden_states=True
+        ).to(get_device())
 
         logger.info(self)
 
@@ -54,7 +53,7 @@ class Encoder:
         encoding = self.tokenizer(
             batch,
             padding=padding,
-            max_length=self.max_length,
+            max_length=self.config.max_length,
             truncation=True,
             return_offsets_mapping=True
         )
@@ -68,7 +67,7 @@ class Encoder:
     def forward(self, ids: torch.Tensor, masks: torch.Tensor) -> torch.Tensor:
         return torch.stack([
             self.model.forward(ids, masks).hidden_states[i]
-            for i in self.layers
+            for i in self.config.layers
         ]).sum(0).squeeze()
 
     def ids_to_tokens(self, ids: torch.Tensor) -> List[str]:

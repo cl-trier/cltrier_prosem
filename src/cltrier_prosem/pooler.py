@@ -1,35 +1,44 @@
 from typing import Literal, List, Tuple
 
 import torch
+from pydantic import BaseModel
+
+POOL_FORM_TYPE = Literal[
+    'cls', 'sent_mean',
+    'subword_first', 'subword_last',
+    'subword_mean', 'subword_min', 'subword_max'
+]
+
+POOL_FORM_FNS: dict = {
+    # sentence based
+    'cls': lambda x: x[0],
+    'sent_mean': lambda x: torch.mean(x[1:-1], dim=0),
+
+    # word based, positional extraction
+    'subword_first': lambda x: x[0],
+    'subword_last': lambda x: x[-1],
+
+    # word based, arithmetic extraction
+    'subword_mean': lambda x: torch.mean(x, dim=0),
+    'subword_min': lambda x: torch.min(x, dim=0)[0],
+    'subword_max': lambda x: torch.max(x, dim=0)[0]
+}
+
+
+class PoolerConfig(BaseModel):
+    form: POOL_FORM_TYPE = 'cls'
+    span_column: str
 
 
 class Pooler:
-    extractions: dict = {
-        # sentence based
-        'cls': lambda x: x[0],
-        'sent_mean': lambda x: torch.mean(x[1:-1], dim=0),
-
-        # word based, positional extraction
-        'subword_first': lambda x: x[0],
-        'subword_last': lambda x: x[-1],
-
-        # word based, arithmetic extraction
-        'subword_mean': lambda x: torch.mean(x, dim=0),
-        'subword_min': lambda x: torch.min(x, dim=0)[0],
-        'subword_max': lambda x: torch.max(x, dim=0)[0]
-    }
 
     @staticmethod
     def batch_pool(
             encoded_batch: dict,
-            form: Literal[
-                'cls', 'sent_mean',
-                'subword_first', 'subword_last',
-                'subword_mean', 'subword_min', 'subword_max'
-            ] = 'cls'
+            form: POOL_FORM_TYPE = 'cls'
     ):
         return torch.stack([
-            Pooler.extractions[form](embed)
+            POOL_FORM_FNS[form](embed)
             for embed in (
                 encoded_batch['embeds']
                 if form in ['cls', 'sent_mean'] else
@@ -49,7 +58,6 @@ class Pooler:
 
     @staticmethod
     def _get_token_idx(mapping: List[Tuple[int, int]], c_span: Tuple[int, int]):
-
         prep_map: callable = lambda pos: list(enumerate(list(zip(*mapping))[pos]))
 
         return (

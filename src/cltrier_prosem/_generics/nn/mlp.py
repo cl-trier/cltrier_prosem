@@ -3,17 +3,17 @@ import logging
 import torch
 import torch.nn as nn
 
-from .util import get_device, model_memory_usage
+from ..util import get_device, model_memory_usage
 
 
-class Classifier(nn.Module):
+class MultilayerPerceptron(nn.Module):
 
     def __init__(
             self,
             in_size: int,
             out_size: int,
-            hid_size: int = 32,
-            dropout: float = 0.2
+            hid_size: int,
+            dropout: float
     ):
         super().__init__()
 
