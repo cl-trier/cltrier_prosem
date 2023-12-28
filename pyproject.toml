@@ -5,7 +5,7 @@ build-backend = "flit_core.buildapi"
 [project]
 name = "cltrier_prosem"
 authors = [
-    { name = "Simon Münker", email = "muenker@uni-trier.com" },
+    { name = "Simon Münker", email = "muenker@uni-trier.de" },
 ]
 readme = "README.md"
 classifiers = [
@@ -19,6 +19,7 @@ dependencies = [
     "jsonlines>=4.0.0",
     "tomli>=2.0.1",
     "pyarrow>=13.0.0",
+    "pydantic>=2.5.2",
     "tqdm>=4.66.1",
     "numpy>=1.25.2",
     "pandas>=2.1.0",
