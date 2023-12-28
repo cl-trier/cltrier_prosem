@@ -1,4 +1,7 @@
 
+install:
+	pip install .
+
 deploy:
 	flit publish
 
