@@ -1,5 +1,5 @@
 import logging
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from datetime import datetime
 from typing import Tuple, Dict, Callable
 
@@ -32,9 +32,12 @@ class Trainer:
 
     config: TrainerConfig
 
-    progress: Progress = Progress()
+    progress: Progress = field(default_factory=Progress)
 
     def __post_init__(self):
+        """
+        Initialize data loaders and load optimizer for the model.
+        """
         # create data loaders
         self.data_loader: Dict[str, DataLoader] = {
             label: DataLoader(
@@ -51,6 +54,11 @@ class Trainer:
         self.optimizer = AdamW(self.model.parameters(), lr=self.config.learning_rate)
 
     def __call__(self) -> None:
+        """
+        Execute the training process for a specified number of epochs.
+        If the training process is interrupted by the user,
+        it will skip to the evaluation step if possible.
+        """
         try:
             for epoch in range(self.config.num_epochs):
                 self._epoch()
@@ -67,6 +75,9 @@ class Trainer:
             self.progress.export(f'{self.config.export_path}/metric.train')
 
     def _epoch(self) -> None:
+        """
+        Method to perform a single epoch of training and testing, and record the progress.
+        """
         time_begin: datetime = datetime.now()
 
         self.progress.append_record(
@@ -77,6 +88,17 @@ class Trainer:
         )
 
     def _step(self, data_loader: DataLoader, optimize: bool = False) -> Tuple[float, float, Dict[str, pd.Series]]:
+        """
+        Perform a step of the training process.
+
+        Args:
+            data_loader (DataLoader): The data loader for the training data.
+            optimize (bool, optional): Whether to optimize the model. Defaults to False.
+
+        Returns:
+            Tuple[float, float, Dict[str, pd.Series]]: A tuple containing the average loss value, the F score metric,
+            and a dictionary of metric data.
+        """
         loss_value: float = 0.0
         metric = Metric(decoding_fn=self.label_decoding_fn)
 
@@ -92,6 +114,16 @@ class Trainer:
         return loss_value / len(data_loader), metric.f_score(), metric.data
 
     def _forward(self, batch: dict, metric: Metric) -> torch.Tensor:
+        """
+        Compute the forward pass through the model and update the metric with observations.
+
+        Args:
+            batch (dict): The input data batch.
+            metric (Metric): The metric object for tracking performance.
+
+        Returns:
+            torch.Tensor: The loss value from the forward pass.
+        """
         predictions, loss = self.model(**batch)
 
         metric.add_observations(
@@ -102,11 +134,21 @@ class Trainer:
         return loss
 
     def _optimize(self, loss: torch.Tensor) -> None:
+        """
+        Optimize the model by performing a backward pass to compute gradients,
+        then taking a step with the optimizer and zeroing the gradients.
+
+        Args:
+            loss (torch.Tensor): The loss value to perform backpropagation.
+        """
         loss.backward()
         self.optimizer.step()
         self.optimizer.zero_grad()
 
     def _evaluate(self) -> None:
+        """
+        Evaluate the model using the max value of f1_test and export the metric to the specified export_path.
+        """
         logging.info(f'[--- EVALUATION on max(f1_test) ---]')
         metric = Metric(
             decoding_fn=self.label_decoding_fn,
