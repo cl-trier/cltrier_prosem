@@ -1,5 +1,6 @@
 from typing import Literal, List, Tuple
 
+import pandas as pd
 import torch
 from pydantic import BaseModel
 
@@ -27,13 +28,30 @@ POOL_FORM_FNS: dict = {
 
 class PoolerConfig(BaseModel):
     form: POOL_FORM_TYPE = 'cls'
-    span_column: str
+    span_columns: List[str]
 
 
 class Pooler:
 
     @staticmethod
-    def batch_pool(
+    def pool_multi(
+            collated_data: pd.DataFrame,
+            encoded_batch: dict,
+            span_columns: List[str],
+            form: POOL_FORM_TYPE
+    ) -> List[torch.tensor]:
+        return [
+            Pooler.pool_batch({
+                'span_idx': collated_data[span_column].tolist(),
+                **encoded_batch
+            },
+                form=form
+            )
+            for span_column in span_columns
+        ]
+
+    @staticmethod
+    def pool_batch(
             encoded_batch: dict,
             form: POOL_FORM_TYPE = 'cls'
     ):

@@ -1,5 +1,6 @@
 from src.cltrier_prosem import Pipeline
 
+
 def test_pipeline():
     pipeline = Pipeline({
         'encoder': {
@@ -17,11 +18,11 @@ def test_pipeline():
         },
         'pooler': {
             'form': 'subword_first',
-            'span_column': 'span'
+            'span_columns': ['span']
         },
         'trainer': {
-            'num_epochs': 1,
-            'batch_size': 2,
+            'num_epochs': 10,
+            'batch_size': 8,
             'learning_rate': 1e-3,
             'export_path': './examples/results',
         }
