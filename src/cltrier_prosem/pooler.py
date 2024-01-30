@@ -79,8 +79,8 @@ class Pooler:
         prep_map: callable = lambda pos: list(enumerate(list(zip(*mapping))[pos]))
 
         span: Tuple[int, int] = (
-            next(eid for eid, cid in reversed(prep_map(0)) if cid == c_span[0]),
-            next(eid for eid, cid in prep_map(1) if cid == c_span[1])
+            next(eid for eid, cid in reversed(prep_map(0)) if cid <= c_span[0]),
+            next(eid for eid, cid in prep_map(1) if cid >= c_span[1])
         )
 
         return span if span[0] <= span[1] else (span[1], span[0])
