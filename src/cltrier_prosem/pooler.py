@@ -75,10 +75,12 @@ class Pooler:
             yield embeds[emb_span_idx[0]: emb_span_idx[1] + 1]
 
     @staticmethod
-    def _get_token_idx(mapping: List[Tuple[int, int]], c_span: Tuple[int, int]):
+    def _get_token_idx(mapping: List[Tuple[int, int]], c_span: Tuple[int, int]) -> Tuple[int, int]:
         prep_map: callable = lambda pos: list(enumerate(list(zip(*mapping))[pos]))
 
-        return (
-            next(eid for eid, cid in reversed(prep_map(0)) if cid <= c_span[0]),
-            next(eid for eid, cid in prep_map(1) if cid >= c_span[1])
+        span: Tuple[int, int] = (
+            next(eid for eid, cid in reversed(prep_map(0)) if cid == c_span[0]),
+            next(eid for eid, cid in prep_map(1) if cid == c_span[1])
         )
+
+        return span if span[0] <= span[1] else (span[1], span[0])
