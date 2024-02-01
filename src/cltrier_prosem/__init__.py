@@ -91,7 +91,7 @@ class Pipeline:
                 )
                 split_embeds.extend([embed for embed in pooled_collated_embeds])
 
-            split.data['embeds'] = [np.array(embed.numpy()) for embed in split_embeds]
+            split.data['embeds'] = [np.array(embed.cpu().numpy()) for embed in split_embeds]
 
             if True:
                 split.data.to_parquet(f'{self.config.trainer.export_path}/embeds.{split.split}.parquet')
