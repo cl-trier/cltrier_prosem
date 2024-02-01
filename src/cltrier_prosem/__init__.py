@@ -4,7 +4,7 @@ __version__ = "0.4.2"
 
 import logging
 import warnings
-from typing import List, Dict
+from typing import List, Dict, Tuple
 
 import numpy as np
 import pandas as pd
@@ -80,7 +80,9 @@ class Pipeline:
         for split in self.dataset.values():
             split_embeds = []
             for _, batch in tqdm(split.data.groupby(np.arange(len(split.data)) // self.config.trainer.batch_size)):
+
                 embeds: dict = self.encoder(batch[self.config.dataset.text_column].tolist())
+
                 pooled_embeds: List[torch.tensor] = Pooler.pool_multi(
                     batch, embeds,
                     self.config.pooler.span_columns,
@@ -89,13 +91,14 @@ class Pipeline:
                 pooled_collated_embeds = torch.cat(
                     pooled_embeds, dim=1 if len(pooled_embeds[0]) != 1 else 0
                 )
+
                 split_embeds.extend([embed for embed in pooled_collated_embeds])
 
-            split.data['embeds'] = [np.array(embed.cpu().numpy()) for embed in split_embeds]
+                for idx, embed in zip(batch.index.values, pooled_collated_embeds):
+                    split.embeds[idx] = embed
 
-            if True:
-                split.data.to_parquet(f'{self.config.trainer.export_path}/embeds.{split.split}.parquet')
-                split.data['embeds'] = split_embeds
+            split.data['embeds'] = [np.array(embed.cpu().numpy()) for embed in split_embeds]
+            split.data.to_parquet(f'{self.config.trainer.export_path}/embeds.{split.split}.parquet')
 
     def encode_labels(self, labels: pd.Series) -> torch.tensor:
         return torch.tensor(
@@ -104,10 +107,10 @@ class Pipeline:
             device=get_device()
         )
 
-    def collate(self, batch: List[pd.DataFrame]) -> dict:
-        collated_data: pd.DataFrame = pd.concat(batch)
+    def collate(self, batch: List[Tuple[pd.DataFrame, torch.Tensor]]) -> dict:
+        dfs, embeds = zip(*batch)
 
         return {
-            'inputs': torch.stack(collated_data.embeds.tolist()),
-            'labels': self.encode_labels(collated_data[self.config.dataset.label_column])
+            'inputs': torch.stack(embeds),
+            'labels': self.encode_labels(pd.concat(dfs)[self.config.dataset.label_column])
         }

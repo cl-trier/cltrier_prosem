@@ -1,7 +1,9 @@
 import logging
-from dataclasses import dataclass
+from dataclasses import dataclass, field
+from typing import Dict, Tuple
 
 import pandas as pd
+import torch
 from torch.utils.data import Dataset as torchDataset
 
 
@@ -12,13 +14,15 @@ class Dataset(torchDataset):
     data_label: str
     target_label: str
 
+    embeds: Dict[str, torch.Tensor] = field(default_factory=dict)
+
     def __post_init__(self):
         """
         Initialize the object after it has been deserialized. Logs the object using the logging module.
         """
         logging.info(self)
 
-    def __getitem__(self, idx) -> pd.DataFrame:
+    def __getitem__(self, idx) -> Tuple[pd.DataFrame, torch.Tensor]:
         """
         Get a specific row of the dataframe by its index.
 
@@ -28,7 +32,9 @@ class Dataset(torchDataset):
         Returns:
             pd.DataFrame: The dataframe containing the selected row.
         """
-        return self.data.iloc[[idx]]
+        item = self.data.iloc[[idx]]
+
+        return item, self.embeds.get(item.index[0], None)
 
     def __len__(self) -> int:
         """
